@@ -1,3 +1,4 @@
+import numpy as np
 
 # start with 1D FFT
 class hbconfig:
@@ -15,6 +16,7 @@ class hbconfig:
 
 
     # number of harmonics should be base 2 for most efficiency
+    # for now be odd, or zero pad
     # frequencies
     # start with 1D 
     def set_harmonics(self, number_harmonics):
@@ -32,6 +34,11 @@ class hbconfig:
     def set_initial_guess(self, initial_guess):
         pass
 
+    def set_fundamental(self, fundamental)
+        '''
+        This is the fundamental frequency for large signal bias
+        '''
+        self._fundamental = fundamental
 
 if __name__ == '__main__':
     hb = hbconfig()
