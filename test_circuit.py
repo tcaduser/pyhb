@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from scipy import linalg
 
 class circuit:
     def __init__(self):
@@ -69,4 +70,14 @@ class circuit:
         jmat[2][2] = grs + idiode_V2
 
         return np.array(jmat), np.array(fvec)
+
+    def dc_solve(self):
+        for i in range(5):
+            j, f = self.load_circuit()
+            update = -np.dot(linalg.inv(j),f)
+            print(update)
+            newsol = self.get_solution() + update
+            self.set_solution(newsol)
+            #print(update.shape)
+            #print(f.shape)
 
