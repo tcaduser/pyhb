@@ -86,7 +86,7 @@ class circuit:
           [0., 0., 0.],
         ])
         cmat[2][2] = qdiode_V2
-
+        print(idiode)
         return gmat, ivec, cmat, qvec
 
     def dc_solve(self):
