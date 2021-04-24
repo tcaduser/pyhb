@@ -43,6 +43,16 @@ class hbconfig:
         '''
         self._fundamental = fundamental
 
+    def set_bias_vector(self, biasvector):
+        pass
+
+    # should be able to set multiple sources
+    def set_bias_callback(self, cb):
+        self._bias_callback = cb
+
+    def set_matrix_rhs_callback(self, cb):
+        self._matrix_rhs_callback = cb
+
 if __name__ == '__main__':
     hb = hbconfig()
     hb.set_harmonics(5)

@@ -25,8 +25,6 @@ class circuit:
     def get_solution(self):
         return self.solution
 
-
-
     def load_circuit(self):
         # solution[0] = I  # current in voltage source
         # solution[1] = V1 # voltage node attached to voltage source and resistor

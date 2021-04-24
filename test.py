@@ -15,3 +15,6 @@ if __name__ == '__main__':
     print((sol[1]-sol[2])/circuit.RS)
     print(sol[0])
 
+    hb.set_bias_callback(lambda x : circuit.set_bias(x))
+    hb.set_matrix_rhs_callback(lambda x : circuit.load_circuit())
+    hb.set_solution_callback(lambda x : circuit.set_solution(x))
