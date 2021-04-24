@@ -8,6 +8,7 @@ class circuit:
         self.IS = 1e-16
         self.VT = 0.0259
         # add diffusion capacitance later
+        self.TF=1e-7
         # series resistance
         self.RS = 1e3
         # bias
@@ -41,40 +42,57 @@ class circuit:
         idiode = common - IS
         idiode_V2 = common/VT
 
+        #https://en.wikipedia.org/wiki/Diffusion_capacitance
+        qdiode = idiode * self.TF
+        qdiode_V2 = idiode_V2 * self.TF
+
         # series resistance
         grs = 1./self.RS
-        irs = (V2 - V1)*grs
+        irs = (V1 - V2)*grs
 
         # voltage source
         ibias = V1 - self.V
         dibias_dv1 = 1.
         dI_dI = 1.0
 
-        fvec = [
+        ivec = np.array([
           ibias,
-          irs - I,
+          +irs - I,
           -irs + idiode
-        ]
+        ])
 
-        jmat = [
+        gmat = np.array([
           [0., 0., 0.],
           [0., 0., 0.],
           [0., 0., 0.],
-        ]
+        ])
 
-        jmat[0][1] = dibias_dv1
-        jmat[1][0] = dI_dI
-        jmat[1][1] = grs
-        jmat[1][2] = -grs
-        jmat[2][1] = -grs
-        jmat[2][2] = grs + idiode_V2
+        gmat[0][1] = dibias_dv1
+        gmat[1][0] = -dI_dI
+        gmat[1][1] = grs
+        gmat[1][2] = -grs
+        gmat[2][1] = -grs
+        gmat[2][2] = +grs + idiode_V2
 
-        return np.array(jmat), np.array(fvec)
+        qvec = np.array([
+          0.0,
+          0.0,
+          qdiode
+        ])
+
+        cmat = np.array([
+          [0., 0., 0.],
+          [0., 0., 0.],
+          [0., 0., 0.],
+        ])
+        cmat[2][2] = qdiode_V2
+
+        return gmat, ivec, cmat, qvec
 
     def dc_solve(self):
-        for i in range(5):
-            j, f = self.load_circuit()
-            update = -np.dot(linalg.inv(j),f)
+        for n in range(20):
+            g, i, c, q  = self.load_circuit()
+            update = -np.dot(linalg.inv(g),i)
             print(update)
             newsol = self.get_solution() + update
             self.set_solution(newsol)
