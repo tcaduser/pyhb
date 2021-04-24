@@ -18,7 +18,7 @@ class hbconfig:
     # number of harmonics should be base 2 for most efficiency
     # for now be odd, or zero pad
     # frequencies
-    # start with 1D 
+    # start with 1D
     def set_harmonics(self, number_harmonics):
         '''
         number_harmonics: Number of harmonics to consider

@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 class circuit:
     def __init__(self):
@@ -11,7 +12,7 @@ class circuit:
         # bias
         self.V  = 0
         # solution
-        self.solution = [0.0]*4
+        self.solution = np.array([0.0]*3)
 
     def set_bias(self, v):
         self.V = v
@@ -67,5 +68,5 @@ class circuit:
         jmat[2][1] = -grs
         jmat[2][2] = grs + idiode_V2
 
-        return jmat, fvec
+        return np.array(jmat), np.array(fvec)
 
