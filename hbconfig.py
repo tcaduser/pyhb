@@ -60,6 +60,7 @@ def real_to_complex_fft(dvec):
     cdata = scipy.fft.rfft(dvec, norm='forward')
     return cdata
 
+
 # start with 1D FFT
 class hbconfig:
     def __init__(self):
@@ -171,10 +172,11 @@ class hbconfig:
         def get_M_sub_matrix(wscale):
             Mmat = gmat.astype(np.cdouble)
             tmat = cmat.astype(np.cdouble)
-            tmat *= ddt_scale*wscale
+            tmat *= wscale
             Mmat += tmat
             return Mmat
 
+        self._M_sub_matrix_callback = get_M_sub_matrix
         return get_M_sub_matrix;
 
     def get_omega_scales(self):
@@ -232,6 +234,38 @@ class hbconfig:
         for i,v in enumerate(fdcopy):
             td_deltax[i] = real_ifft(v)
         return td_deltax
+
+    def apply_jacobian(self, fdvec):
+        data = self._time_domain_data
+
+        # dimensions are number of equations by number of time samples
+        tdx = self.get_td_deltax(fdvec)
+
+        dg_td = np.zeros((self._number_rows, self._time_vec_len), dtype=np.double)
+        dc_td = np.zeros(dg_td.shape, dtype=np.double)
+
+        for i, d in enumerate(data):
+            dg_td[:,i] = d['gmat'].dot(tdx[:,i])
+            dc_td[:,i] = d['cmat'].dot(tdx[:,i])
+
+        dg_fd = self.get_fft_of_td(dg_td)
+        dc_fd = self.get_fft_of_td(dc_td)
+        dc_fd = self.apply_omega_scales(dc_fd)
+
+        japplied = dg_fd + dc_fd
+        japplied = np.reshape(japplied,(self._number_rows*self._real_frequency_vec_len,))
+        return japplied
+
+
+    def apply_preconditioner(self, fdvec):
+        cb = self._M_sub_matrix_callback
+        wscales = self.get_omega_scales()
+        papplied = np.zeros((self._number_rows, self._real_frequency_vec_len), dtype=np.cdouble)
+        fdcopy = fdvec.reshape(self._number_rows, self._real_frequency_vec_len)
+        for i, w in enumerate(wscales):
+            papplied[:,i] = cb(w).dot(fdcopy[:,i])
+        papplied = np.reshape(papplied,(self._number_rows*self._real_frequency_vec_len,))
+        return papplied
 
 
 

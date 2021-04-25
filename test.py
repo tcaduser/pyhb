@@ -42,7 +42,8 @@ print(cb(1.0))
 hb.get_fd_RHS()
 
 vec = np.zeros((hb._number_rows*hb._real_frequency_vec_len,))
-hb.get_td_deltax(vec)
+hb.apply_jacobian(vec)
+hb.apply_preconditioner(vec)
 # matrix multiply
 # then fft
 # then omega scale
