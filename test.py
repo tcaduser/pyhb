@@ -32,8 +32,12 @@ hb.create_hb_solution()
 avec = np.array([0.5, 0.001, 0, 0, 0, 0], dtype=np.cdouble)
 hb.set_bias_vector(avec)
 #print(hb.get_time_bias_vector())
-hb.collect_data()
+hb.collect_simulation_data()
 #print(hb.get_hb_solution_time_domain())
+cb = hb.get_M_sub_matrix_callback()
+print(cb(0.0))
+# print(cb(0.0))
+print(cb(1.0))
 
 
 

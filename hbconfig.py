@@ -1,5 +1,8 @@
 import numpy as np
 import scipy.fft
+from scipy import linalg
+from scipy import sparse
+import scipy.sparse.linalg
 
 #### ALGORITHM
 # for each bias condition:
@@ -122,7 +125,7 @@ class hbconfig:
         dvec = ss_to_ds_spectrum(self._bias_vector, 0.5)
         return real_ifft(dvec)
 
-    def collect_data(self):
+    def collect_simulation_data(self):
         tbv = self.get_time_bias_vector()
         hbs = self.get_hb_solution_time_domain()
         data = []
@@ -130,5 +133,30 @@ class hbconfig:
             self._bias_callback(v)
             self._solution_callback(hbs[:,i])
             data.append(self._matrix_rhs_callback())
-        print(data)
+        #print(data)
+        self._time_domain_data = data
+        return data
+
+    # this is the frequency dependent preconditioner
+    # start with dense matrix first
+    def get_M_sub_matrix_callback(self):
+        data = self._time_domain_data
+        gmat = sparse.csc_matrix(data[0]['gmat'].shape, dtype=np.double)
+        cmat = sparse.csc_matrix(data[0]['cmat'].shape, dtype=np.double)
+        #print("HERE")
+        for d in data:
+            gmat +=  d['gmat']
+            cmat +=  d['cmat']
+        scl = 1./float(len(data))
+        gmat *= scl
+        cmat *= scl
+
+        def get_M_sub_matrix(wscale):
+            Mmat = gmat.astype(np.cdouble)
+            tmat = cmat.astype(np.cdouble)
+            tmat *= 1j*wscale
+            Mmat += tmat
+            return Mmat
+
+        return get_M_sub_matrix;
 

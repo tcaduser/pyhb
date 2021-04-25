@@ -1,6 +1,8 @@
 import math
 import numpy as np
 from scipy import linalg
+from scipy import sparse
+import scipy.sparse.linalg
 
 class circuit:
     def __init__(self):
@@ -88,16 +90,18 @@ class circuit:
         cmat[2][2] = qdiode_V2
 
         return {
-          'gmat' : gmat,
+          'gmat' : sparse.csc_matrix(gmat),
           'ivec' : ivec,
-          'cmat' : cmat,
+          'cmat' : sparse.csc_matrix(cmat),
           'qvec' : qvec,
         }
 
     def dc_solve(self):
         for n in range(5):
             data  = self.load_circuit()
-            update = -np.dot(linalg.inv(data['gmat']),data['ivec'])
+            #print(data['gmat'])
+            jinv = sparse.linalg.factorized(data['gmat'])
+            update = -jinv(data['ivec'])
             print(update)
             newsol = self.get_solution() + update
             self.set_solution(newsol)
