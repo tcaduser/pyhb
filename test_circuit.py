@@ -88,7 +88,7 @@ class circuit:
         return gmat, ivec, cmat, qvec
 
     def dc_solve(self):
-        for n in range(20):
+        for n in range(5):
             g, i, c, q  = self.load_circuit()
             update = -np.dot(linalg.inv(g),i)
             print(update)

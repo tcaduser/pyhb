@@ -1,4 +1,43 @@
 import numpy as np
+import scipy.fft
+
+#### ALGORITHM
+# for each bias condition:
+#   collect g, c, i, q
+# create preconditioner:
+#   average of g
+#   average of c
+# for each frequency
+#   calculate P(j*omega)
+#   solve     M = inv(P(omega))
+# calculate Omega
+#   the time/frequency differentiation operator
+#
+# Nonlinear iteration:
+#   form RHS vector F = \Gamma i + \Omega \Gamma q
+#   form dx vector from RHS Vector
+#   Linear iteration:
+#     Based on Request:
+#       Apply M to vector
+#       Apply Jacobian to Vector:
+#         (a) Apply \Gamma^{-1} to dx vector
+#         (b) Apply time domain g to (a)
+#         (c) Apply \Gamma to (b)
+#         (d) Apply time domain c to (a)
+#         (e) Apply \Gamma to to (d)
+#         (f) Apply Omega to (e)
+#         (g) sum (c) + (f)
+
+
+def ss_to_ds_spectrum(avec, harmonic_factor):
+    if harmonic_factor != 1.0:
+        avec[1::] *= harmonic_factor
+    dvec = np.concatenate((avec, np.conjugate(np.flip(avec[1::]))))
+    return dvec
+
+def real_ifft(dvec):
+    rdata = np.real(scipy.fft.ifft(dvec, norm='forward'))
+    return rdata
 
 # start with 1D FFT
 class hbconfig:
@@ -44,7 +83,9 @@ class hbconfig:
         self._fundamental = fundamental
 
     def set_bias_vector(self, biasvector):
-        pass
+        if biasvector.shape[0] != self._real_frequency_vec_len:
+            raise RuntimeError('wrong size for bias_vector %d != %d', (biasvector.shape[0], self._real_frequency_vec_len))
+        self._bias_vector = self._real_frequency_vec_len
 
     # should be able to set multiple sources
     def set_bias_callback(self, cb):
@@ -55,6 +96,20 @@ class hbconfig:
 
     def set_solution_callback(self, cb):
         self._solution_callback = cb
+
+    def set_dc_solution(self, sol):
+        self._dc_solution = sol
+
+    def create_hb_solution(self):
+        # These are the positive only frequency terms
+        # and are what we will actually store and use for iteration
+        length = self._number_harmonics + 1
+        self._real_frequency_vec_len = length
+        self._hb_solution = np.zeros(shape=(length*self._number_rows,), dtype=np.cdouble)
+        if self._number_rows != self._dc_solution.shape[0]:
+            raise RuntimeError('Initial DC solution must be same length _number_rows')
+        self._hb_solution[::length] = self._dc_solution
+        #print(self._hb_solution)
 
 if __name__ == '__main__':
     hb = hbconfig()
