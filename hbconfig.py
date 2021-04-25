@@ -85,7 +85,7 @@ class hbconfig:
     def set_bias_vector(self, biasvector):
         if biasvector.shape[0] != self._real_frequency_vec_len:
             raise RuntimeError('wrong size for bias_vector %d != %d', (biasvector.shape[0], self._real_frequency_vec_len))
-        self._bias_vector = self._real_frequency_vec_len
+        self._bias_vector = biasvector
 
     # should be able to set multiple sources
     def set_bias_callback(self, cb):
@@ -105,12 +105,30 @@ class hbconfig:
         # and are what we will actually store and use for iteration
         length = self._number_harmonics + 1
         self._real_frequency_vec_len = length
-        self._hb_solution = np.zeros(shape=(length*self._number_rows,), dtype=np.cdouble)
+        self._time_vec_len = 2*length - 1
+        self._hb_solution = np.zeros(shape=(self._number_rows, length), dtype=np.cdouble)
         if self._number_rows != self._dc_solution.shape[0]:
             raise RuntimeError('Initial DC solution must be same length _number_rows')
-        self._hb_solution[::length] = self._dc_solution
-        #print(self._hb_solution)
+        self._hb_solution[:, 0] = self._dc_solution
+        print(self._hb_solution)
 
-if __name__ == '__main__':
-    hb = hbconfig()
-    hb.set_harmonics(5)
+    def get_hb_solution_time_domain(self):
+        hbtd = np.zeros(shape=(self._number_rows, self._time_vec_len))
+        for i in range(self._number_rows):
+            hbtd[i,:] = real_ifft(ss_to_ds_spectrum(self._hb_solution[i,:], 0.5))
+        return hbtd
+
+    def get_time_bias_vector(self):
+        dvec = ss_to_ds_spectrum(self._bias_vector, 0.5)
+        return real_ifft(dvec)
+
+    def collect_data(self):
+        tbv = self.get_time_bias_vector()
+        hbs = self.get_hb_solution_time_domain()
+        data = []
+        for i, v in enumerate(tbv):
+            self._bias_callback(v)
+            self._solution_callback(hbs[:,i])
+            data.append(self._matrix_rhs_callback())
+        print(data)
+

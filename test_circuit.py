@@ -17,9 +17,11 @@ class circuit:
         self.solution = np.array([0.0]*3)
 
     def set_bias(self, v):
+        print("set bias %g" % v)
         self.V = v
 
     def set_solution(self, sol):
+        print("set solution %s" % str(sol))
         self.solution = sol
 
     def get_solution(self):
@@ -85,12 +87,17 @@ class circuit:
         ])
         cmat[2][2] = qdiode_V2
 
-        return gmat, ivec, cmat, qvec
+        return {
+          'gmat' : gmat,
+          'ivec' : ivec,
+          'cmat' : cmat,
+          'qvec' : qvec,
+        }
 
     def dc_solve(self):
         for n in range(5):
-            g, i, c, q  = self.load_circuit()
-            update = -np.dot(linalg.inv(g),i)
+            data  = self.load_circuit()
+            update = -np.dot(linalg.inv(data['gmat']),data['ivec'])
             print(update)
             newsol = self.get_solution() + update
             self.set_solution(newsol)
