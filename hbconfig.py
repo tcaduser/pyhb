@@ -53,6 +53,9 @@ class hbconfig:
     def set_matrix_rhs_callback(self, cb):
         self._matrix_rhs_callback = cb
 
+    def set_solution_callback(self, cb):
+        self._solution_callback = cb
+
 if __name__ == '__main__':
     hb = hbconfig()
     hb.set_harmonics(5)

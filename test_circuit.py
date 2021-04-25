@@ -55,7 +55,7 @@ class circuit:
 
         ivec = np.array([
           ibias,
-          +irs - I,
+          +irs + I,
           -irs + idiode
         ])
 
@@ -66,7 +66,7 @@ class circuit:
         ])
 
         gmat[0][1] = dibias_dv1
-        gmat[1][0] = -dI_dI
+        gmat[1][0] = +dI_dI
         gmat[1][1] = grs
         gmat[1][2] = -grs
         gmat[2][1] = -grs
