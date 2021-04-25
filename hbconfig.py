@@ -182,6 +182,19 @@ class hbconfig:
         ws = [ddt_scale * two_pi * self._fundamental * x for x in range(self._real_frequency_vec_len)]
         return ws
 
+    def get_fft_of_td(self, td):
+        # assume dimensions are _number_rows, _time_vec_len
+        fd = np.zeros((self._number_rows, self._real_frequency_vec_len), dtype=np.cdouble)
+        for i, v in enumerate(td):
+            fd[i] = real_to_complex_fft(v)
+        return fd
+
+
+    def apply_omega_scales(self, fd):
+        wscales = self.get_omega_scales()
+        for i, v in enumerate(wscales):
+            fd[:,i] *= v
+        return fd
 
     # frequency domain RHS
     def get_fd_RHS(self):
@@ -194,28 +207,16 @@ class hbconfig:
             td_i[:,i] = d['ivec']
             td_q[:,i] = d['qvec']
 
-        # make this more efficient later
-        fd_i = np.zeros((self._number_rows, self._real_frequency_vec_len), dtype=np.cdouble)
-        fd_q = np.zeros(fd_i.shape, dtype=np.cdouble)
-
-        for i, v in enumerate(td_i):
-            fd_i[i] = real_to_complex_fft(v)
-        for i, v in enumerate(td_q):
-            fd_q[i] = real_to_complex_fft(v)
-
-        wscales =self.get_omega_scales()
-        for i, v in enumerate(wscales):
-            fd_q[:,i] *= v
+        fd_i = self.get_fft_of_td(td_i)
+        fd_q = self.get_fft_of_td(td_q)
+        fd_q = self.apply_omega_scales(fd_q)
 
         rhs = fd_i + fd_q
-        #print(rhs)
-        rhs = np.transpose(rhs)
-        #print()
-        #print(rhs)
         rhs = np.reshape(rhs,(self._number_rows*self._real_frequency_vec_len,))
-        #print()
-        #print(rhs)
         return rhs
+        # TODO: do not transpose or reshape into a vector yet
+        #rhs = np.transpose(rhs)
+        #rhs = np.reshape(rhs,(self._number_rows*self._real_frequency_vec_len,))
 
     # assume the solution vector is per frequency per node
     # needs to be converted so that each time-sample jacobian can be readily multiplied by a vector
@@ -231,4 +232,6 @@ class hbconfig:
         for i,v in enumerate(fdcopy):
             td_deltax[i] = real_ifft(v)
         return td_deltax
+
+
 
