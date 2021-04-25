@@ -3,6 +3,7 @@ import scipy.fft
 from scipy import linalg
 from scipy import sparse
 import scipy.sparse.linalg
+import math
 
 #### ALGORITHM
 # for each bias condition:
@@ -31,6 +32,9 @@ import scipy.sparse.linalg
 #         (f) Apply Omega to (e)
 #         (g) sum (c) + (f)
 
+ddt_scale = 1j
+idt_scale = -ddt_scale
+two_pi = 2.0 * math.pi
 
 def ss_to_ds_spectrum(avec, harmonic_factor):
     if harmonic_factor != 1.0:
@@ -41,6 +45,16 @@ def ss_to_ds_spectrum(avec, harmonic_factor):
 def real_ifft(dvec):
     rdata = np.real(scipy.fft.ifft(dvec, norm='forward'))
     return rdata
+
+def real_to_complex_fft(dvec, harmonic_factor):
+    # note for even number of samples, the last element
+    # is purely real, and twice the magnitude
+    if not len(dvec) // 2:
+        raise RuntimeError("must be careful with high frequency component")
+    cdata = scipy.fft.rfft(dvec, norm='forward')
+    if harmonic_factor != 0.0:
+        cdata[1::] *= harmonic_factor
+    return cdata
 
 # start with 1D FFT
 class hbconfig:
@@ -154,9 +168,51 @@ class hbconfig:
         def get_M_sub_matrix(wscale):
             Mmat = gmat.astype(np.cdouble)
             tmat = cmat.astype(np.cdouble)
-            tmat *= 1j*wscale
+            tmat *= ddt_scale*wscale
             Mmat += tmat
             return Mmat
 
         return get_M_sub_matrix;
 
+    def get_omega_scales(self):
+        # right now only worry about 1D fft
+        ws = [ddt_scale * two_pi * self._fundamental * x for x in range(self._real_frequency_vec_len)]
+        return ws
+
+
+    # frequency domain RHS
+    def get_fd_RHS(self):
+        data = self._time_domain_data
+        if len(data) != self._time_vec_len:
+            raise RuntimeError("UNEXPECTED")
+        td_i = np.zeros((self._number_rows, self._time_vec_len), dtype=np.double)
+        td_q = np.zeros(td_i.shape, dtype=np.double)
+        for i, d in enumerate(data):
+            td_i[:,i] = d['ivec']
+            td_q[:,i] = d['qvec']
+
+        # make this more efficient later
+        fd_i = np.zeros((self._number_rows, self._real_frequency_vec_len), dtype=np.cdouble)
+        fd_q = np.zeros(fd_i.shape, dtype=np.cdouble)
+
+        for i, v in enumerate(td_i):
+            fd_i[i] = real_to_complex_fft(v, 2.0)
+        for i, v in enumerate(td_q):
+            fd_q[i] = real_to_complex_fft(v, 2.0)
+
+        wscales =self.get_omega_scales()
+        for i, v in enumerate(wscales):
+            fd_q[:,i] *= v
+
+        rhs = fd_i + fd_q
+        #print(rhs)
+        rhs = np.transpose(rhs)
+        #print()
+        #print(rhs)
+        rhs = np.reshape(rhs,(self._number_rows*self._real_frequency_vec_len,))
+        #print()
+        #print(rhs)
+        return rhs
+
+    def get_td_deltax(self):
+        pass

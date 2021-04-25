@@ -25,6 +25,7 @@ hb.set_harmonics(5)
 hb.set_bias_callback(lambda x : circuit.set_bias(x))
 hb.set_matrix_rhs_callback(lambda : circuit.load_circuit())
 hb.set_solution_callback(lambda x : circuit.set_solution(x))
+hb.set_fundamental(1e6)
 
 hb.set_number_rows(sol.shape[0])
 hb.set_dc_solution(sol)
@@ -38,6 +39,7 @@ cb = hb.get_M_sub_matrix_callback()
 print(cb(0.0))
 # print(cb(0.0))
 print(cb(1.0))
+hb.get_fd_RHS()
 
 
 
