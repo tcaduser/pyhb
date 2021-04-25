@@ -36,24 +36,28 @@ ddt_scale = 1j
 idt_scale = -ddt_scale
 two_pi = 2.0 * math.pi
 
-def ss_to_ds_spectrum(avec, harmonic_factor):
-    if harmonic_factor != 1.0:
-        avec[1::] *= harmonic_factor
-    dvec = np.concatenate((avec, np.conjugate(np.flip(avec[1::]))))
-    return dvec
+#
+# TODO: prevent needless copying by using half ac magnitude
+#
+# def ss_to_ds_spectrum(avec, harmonic_factor):
+#     if harmonic_factor != 1.0:
+#         dvec = avec.copy()
+#         dvec[1::] *= harmonic_factor
+#         return dvec
+#     return avec
+
 
 def real_ifft(dvec):
-    rdata = np.real(scipy.fft.ifft(dvec, norm='forward'))
+    #assume it is odd
+    rdata = scipy.fft.irfft(dvec, n=(2*len(dvec)-1), norm='forward')
     return rdata
 
-def real_to_complex_fft(dvec, harmonic_factor):
+def real_to_complex_fft(dvec):
     # note for even number of samples, the last element
     # is purely real, and twice the magnitude
     if not len(dvec) // 2:
         raise RuntimeError("must be careful with high frequency component")
     cdata = scipy.fft.rfft(dvec, norm='forward')
-    if harmonic_factor != 0.0:
-        cdata[1::] *= harmonic_factor
     return cdata
 
 # start with 1D FFT
@@ -132,12 +136,11 @@ class hbconfig:
     def get_hb_solution_time_domain(self):
         hbtd = np.zeros(shape=(self._number_rows, self._time_vec_len))
         for i in range(self._number_rows):
-            hbtd[i,:] = real_ifft(ss_to_ds_spectrum(self._hb_solution[i,:], 0.5))
+            hbtd[i,:] = real_ifft(self._hb_solution[i,:])
         return hbtd
 
     def get_time_bias_vector(self):
-        dvec = ss_to_ds_spectrum(self._bias_vector, 0.5)
-        return real_ifft(dvec)
+        return real_ifft(self._bias_vector)
 
     def collect_simulation_data(self):
         tbv = self.get_time_bias_vector()
@@ -196,9 +199,9 @@ class hbconfig:
         fd_q = np.zeros(fd_i.shape, dtype=np.cdouble)
 
         for i, v in enumerate(td_i):
-            fd_i[i] = real_to_complex_fft(v, 2.0)
+            fd_i[i] = real_to_complex_fft(v)
         for i, v in enumerate(td_q):
-            fd_q[i] = real_to_complex_fft(v, 2.0)
+            fd_q[i] = real_to_complex_fft(v)
 
         wscales =self.get_omega_scales()
         for i, v in enumerate(wscales):
@@ -214,5 +217,18 @@ class hbconfig:
         #print(rhs)
         return rhs
 
-    def get_td_deltax(self):
-        pass
+    # assume the solution vector is per frequency per node
+    # needs to be converted so that each time-sample jacobian can be readily multiplied by a vector
+    def get_td_deltax(self, fdvec):
+        '''
+        input: solution update vector
+        '''
+        # npts = (self._number_rows*self._real_frequency_vec_len,)
+        fdcopy = fdvec.reshape(self._number_rows, self._real_frequency_vec_len)
+
+        # each column goes to a different jacobian
+        td_deltax = np.zeros((self._number_rows, self._time_vec_len), dtype=np.double)
+        for i,v in enumerate(fdcopy):
+            td_deltax[i] = real_ifft(v)
+        return td_deltax
+
