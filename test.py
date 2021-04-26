@@ -7,7 +7,7 @@ import numpy as np
 circuit = test_circuit.circuit()
 
 # set dc bias
-circuit.set_bias(0.5)
+circuit.set_bias(0.7)
 
 # solve
 circuit.dc_solve()
@@ -24,12 +24,12 @@ hb.set_harmonics(5)
 hb.set_bias_callback(lambda x : circuit.set_bias(x))
 hb.set_matrix_rhs_callback(lambda : circuit.load_circuit())
 hb.set_solution_callback(lambda x : circuit.set_solution(x))
-hb.set_fundamental(1e6)
+hb.set_fundamental(1)
 
 hb.set_number_rows(sol.shape[0])
 hb.set_dc_solution(sol)
 hb.create_hb_solution()
-avec = np.array([0.5, 0.005, 0, 0, 0, 0], dtype=np.cdouble)
+avec = np.array([0.7, 0.01, 0, 0, 0, 0], dtype=np.cdouble)
 hb.set_bias_vector(avec)
 
 # this is at the beginning of each step
@@ -43,5 +43,23 @@ if False:
     hb.apply_jacobian(vec)
     hb.apply_preconditioner()
 
-x, exitCode = hb.linear_solve()
-hb.set_hb_solution_update(x)
+for i in range(100):
+    x, exitCode = hb.linear_solve()
+    hb.set_hb_solution_update(x)
+print(hb.get_hb_solution())
+#x, exitCode = hb.linear_solve()
+#hb.set_hb_solution_update(x)
+#x, exitCode = hb.linear_solve()
+#hb.set_hb_solution_update(x)
+#x, exitCode = hb.linear_solve()
+#hb.set_hb_solution_update(x)
+#x, exitCode = hb.linear_solve()
+#hb.set_hb_solution_update(x)
+#x, exitCode = hb.linear_solve()
+#hb.set_hb_solution_update(x)
+#x, exitCode = hb.linear_solve()
+#hb.set_hb_solution_update(x)
+#x, exitCode = hb.linear_solve()
+#hb.set_hb_solution_update(x)
+#x, exitCode = hb.linear_solve()
+#hb.set_hb_solution_update(x)

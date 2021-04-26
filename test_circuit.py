@@ -45,8 +45,11 @@ class circuit:
         idiode_V2 = common/VT
 
         #https://en.wikipedia.org/wiki/Diffusion_capacitance
-        qdiode = idiode * self.TF
-        qdiode_V2 = idiode_V2 * self.TF
+        #qdiode = idiode * self.TF
+        #qdiode_V2 = idiode_V2 * self.TF
+        qdiode_V2 = 1e-15
+        qdiode = qdiode_V2 * V2
+        #qdiode = qdiode_V2 * V2
 
         # series resistance
         grs = 1./self.RS
@@ -88,7 +91,6 @@ class circuit:
           [0., 0., 0.],
         ])
         cmat[2][2] = qdiode_V2
-
         return {
           'gmat' : sparse.csc_matrix(gmat),
           'ivec' : ivec,

@@ -32,7 +32,7 @@ import math
 #         (f) Apply Omega to (e)
 #         (g) sum (c) + (f)
 
-ddt_scale = 1j
+ddt_scale = -1j
 idt_scale = -ddt_scale
 two_pi = 2.0 * math.pi
 
@@ -139,6 +139,7 @@ class hbconfig:
 
     def set_hb_solution_update(self, upd):
         nupd = upd.reshape((self._number_rows, self._real_frequency_vec_len))
+        nupd[:,0] = np.real(nupd[:,0])
         rerr = linalg.norm(nupd)/linalg.norm(self._hb_solution)
         print("RELATIVE ERROR %g" % rerr)
         self._hb_solution += nupd
@@ -179,6 +180,9 @@ class hbconfig:
         scl = 1./float(len(data))
         gmat *= scl
         cmat *= scl
+        #print(gmat)
+        #print(cmat)
+        #raise RuntimeError('TEST')
 
         def get_M_sub_matrix(wscale):
             Mmat = gmat.astype(np.cdouble)
@@ -193,6 +197,7 @@ class hbconfig:
     def get_omega_scales(self):
         # right now only worry about 1D fft
         ws = [ddt_scale * two_pi * self._fundamental * x for x in range(self._real_frequency_vec_len)]
+        #print(ws)
         return ws
 
     def get_fft_of_td(self, td):
@@ -207,6 +212,9 @@ class hbconfig:
         wscales = self.get_omega_scales()
         for i, v in enumerate(wscales):
             fd[:,i] *= v
+        #print(fd.shape)
+        #print(fd)
+        #raise RuntimeError("STOP")
         return fd
 
     # frequency domain RHS
@@ -264,6 +272,8 @@ class hbconfig:
         dc_fd = self.apply_omega_scales(dc_fd)
 
         japplied = dg_fd + dc_fd
+        #TODO: is this one necessary?
+        japplied[:,0] = np.real(japplied[:,0])
         japplied = np.reshape(japplied,(self._number_rows*self._real_frequency_vec_len,))
         return japplied
 
@@ -284,6 +294,7 @@ class hbconfig:
         fdcopy = fdvec.reshape(self._number_rows, self._real_frequency_vec_len)
         for i, p in enumerate(self._preconditioner):
             papplied[:,i] = p(fdcopy[:,i])
+        papplied[:,0] = np.real(papplied[:,0])
         papplied = np.reshape(papplied,(self._number_rows*self._real_frequency_vec_len,))
         return papplied
 
@@ -299,13 +310,14 @@ class hbconfig:
         fdshape = self.get_fd_system_shape()
         F = -self.get_fd_RHS()
 
-        #M_x = lambda x : self.apply_preconditioner(x)
-        #M = sparse.linalg.LinearOperator(fdshape, M_x)
+        M_x = lambda x : self.apply_preconditioner(x)
+        M = sparse.linalg.LinearOperator(fdshape, M_x)
 
         J_x = lambda x : self.apply_jacobian(x)
         J = sparse.linalg.LinearOperator(fdshape, J_x)
 
-        x, exitCode = sparse.linalg.gmres(A=J, b=F, callback_type='pr_norm', callback=lambda x : print(x), tol=1e-20)
+        #x, exitCode = sparse.linalg.gmres(A=J, b=F, callback_type='pr_norm', callback=lambda x : print(x), tol=1e-20)
+        x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, tol=1e-20)
         #x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, callback_type='pr_norm', callback=lambda x : print(x), tol=1e-20)
         print(x,exitCode)
         print(F)
