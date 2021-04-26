@@ -19,11 +19,11 @@ class circuit:
         self.solution = np.array([0.0]*3)
 
     def set_bias(self, v):
-        print("set bias %g" % v)
+        #print("set bias %g" % v)
         self.V = v
 
     def set_solution(self, sol):
-        print("set solution %s" % str(sol))
+        #print("set solution %s" % str(sol))
         self.solution = sol
 
     def get_solution(self):
@@ -40,14 +40,18 @@ class circuit:
 
         IS = self.IS
         VT = self.VT
-        common = IS*(math.exp(V2/VT))
+        try:
+            common = IS*(math.exp(V2/VT))
+        except:
+            common = IS*(math.exp(20))
+
         idiode = common - IS
         idiode_V2 = common/VT
 
         #https://en.wikipedia.org/wiki/Diffusion_capacitance
         #qdiode = idiode * self.TF
         #qdiode_V2 = idiode_V2 * self.TF
-        qdiode_V2 = 1e-15
+        qdiode_V2 = 1e-10
         qdiode = qdiode_V2 * V2
         #qdiode = qdiode_V2 * V2
 
