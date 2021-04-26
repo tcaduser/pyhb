@@ -3,7 +3,6 @@ import test_circuit
 import numpy as np
 
 
-
 # create circuit
 circuit = test_circuit.circuit()
 
@@ -30,22 +29,19 @@ hb.set_fundamental(1e6)
 hb.set_number_rows(sol.shape[0])
 hb.set_dc_solution(sol)
 hb.create_hb_solution()
-avec = np.array([0.5, 0.0005, 0, 0, 0, 0], dtype=np.cdouble)
+avec = np.array([0.5, 0.005, 0, 0, 0, 0], dtype=np.cdouble)
 hb.set_bias_vector(avec)
-#print(hb.get_time_bias_vector())
-hb.collect_simulation_data()
-#print(hb.get_hb_solution_time_domain())
-cb = hb.get_M_sub_matrix_callback()
-print(cb(0.0))
+
+# this is at the beginning of each step
+#print(cb(0.0))
 # print(cb(0.0))
-print(cb(1.0))
-hb.get_fd_RHS()
+#print(cb(1.0))
 
-vec = np.zeros((hb._number_rows*hb._real_frequency_vec_len,))
-hb.apply_jacobian(vec)
-hb.apply_preconditioner(vec)
-# matrix multiply
-# then fft
-# then omega scale
+if False:
+    hb.get_fd_RHS()
+    vec = np.zeros((hb._number_rows*hb._real_frequency_vec_len,))
+    hb.apply_jacobian(vec)
+    hb.apply_preconditioner()
 
-
+x, exitCode = hb.linear_solve()
+hb.set_hb_solution_update(x)

@@ -134,6 +134,16 @@ class hbconfig:
         self._hb_solution[:, 0] = self._dc_solution
         print(self._hb_solution)
 
+    def get_hb_solution(self):
+        return self._hb_solution
+
+    def set_hb_solution_update(self, upd):
+        nupd = upd.reshape((self._number_rows, self._real_frequency_vec_len))
+        rerr = linalg.norm(nupd)/linalg.norm(self._hb_solution)
+        print("RELATIVE ERROR %g" % rerr)
+        self._hb_solution += nupd
+        
+
     def get_hb_solution_time_domain(self):
         hbtd = np.zeros(shape=(self._number_rows, self._time_vec_len))
         for i in range(self._number_rows):
@@ -153,6 +163,7 @@ class hbconfig:
             data.append(self._matrix_rhs_callback())
         #print(data)
         self._time_domain_data = data
+        self._preconditioner = None
         return data
 
     # this is the frequency dependent preconditioner
@@ -256,16 +267,49 @@ class hbconfig:
         japplied = np.reshape(japplied,(self._number_rows*self._real_frequency_vec_len,))
         return japplied
 
-
-    def apply_preconditioner(self, fdvec):
+    def calculate_preconditioner(self):
         cb = self._M_sub_matrix_callback
         wscales = self.get_omega_scales()
+        Minvs = [None]*len(wscales)
+        for i, w in enumerate(wscales):
+            Minvs[i] = sparse.linalg.factorized(cb(w))
+        self._preconditioner = Minvs
+
+
+    def apply_preconditioner(self, fdvec):
+        if self._preconditioner == None:
+            self.calculate_preconditioner()
+
         papplied = np.zeros((self._number_rows, self._real_frequency_vec_len), dtype=np.cdouble)
         fdcopy = fdvec.reshape(self._number_rows, self._real_frequency_vec_len)
-        for i, w in enumerate(wscales):
-            papplied[:,i] = cb(w).dot(fdcopy[:,i])
+        for i, p in enumerate(self._preconditioner):
+            papplied[:,i] = p(fdcopy[:,i])
         papplied = np.reshape(papplied,(self._number_rows*self._real_frequency_vec_len,))
         return papplied
 
+    def get_fd_system_shape(self):
+        n = self._number_rows*self._real_frequency_vec_len
+        return (n,n)
 
+
+    def linear_solve(self):
+        self.collect_simulation_data()
+        self.get_M_sub_matrix_callback()
+
+        fdshape = self.get_fd_system_shape()
+        F = -self.get_fd_RHS()
+
+        #M_x = lambda x : self.apply_preconditioner(x)
+        #M = sparse.linalg.LinearOperator(fdshape, M_x)
+
+        J_x = lambda x : self.apply_jacobian(x)
+        J = sparse.linalg.LinearOperator(fdshape, J_x)
+
+        x, exitCode = sparse.linalg.gmres(A=J, b=F, callback_type='pr_norm', callback=lambda x : print(x), tol=1e-20)
+        #x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, callback_type='pr_norm', callback=lambda x : print(x), tol=1e-20)
+        print(x,exitCode)
+        print(F)
+        #x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, x0=x, callback_type='pr_norm', callback=lambda x : print(x))
+        #print(x,exitCode)
+        return x, exitCode
 
