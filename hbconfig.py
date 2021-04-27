@@ -51,7 +51,7 @@ def real_ifft(dvec):
     #assume it is odd
     if dvec.ndim == 2 and dvec.shape[1] != 1:
         dlen = dvec.shape[1]
-    elif dvec.ndim == 1:
+    elif dvec.ndim == 1 or dvec.shape[1] == 1:
         dlen = dvec.shape[0]
     else:
         raise RuntimeError("Cannot process " + str(dvec.shape))
@@ -61,7 +61,7 @@ def real_ifft(dvec):
 def real_to_complex_fft(dvec):
     if dvec.ndim == 2 and dvec.shape[1] != 1:
         dlen = dvec.shape[1]
-    elif dvec.ndim == 1:
+    elif dvec.ndim == 1 or dvec.shape[1] == 1:
         dlen = dvec.shape[0]
     else:
         raise RuntimeError("Cannot process " + str(dvec.shape))
