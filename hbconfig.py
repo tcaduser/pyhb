@@ -49,13 +49,25 @@ two_pi = 2.0 * math.pi
 
 def real_ifft(dvec):
     #assume it is odd
-    rdata = scipy.fft.irfft(dvec, n=(2*len(dvec)-1), norm='forward')
+    if dvec.ndim == 2 and dvec.shape[1] != 1:
+        dlen = dvec.shape[1]
+    elif dvec.ndim == 1:
+        dlen = dvec.shape[0]
+    else:
+        raise RuntimeError("Cannot process " + str(dvec.shape))
+    rdata = scipy.fft.irfft(dvec, n=(2*dlen-1), norm='forward')
     return rdata
 
 def real_to_complex_fft(dvec):
+    if dvec.ndim == 2 and dvec.shape[1] != 1:
+        dlen = dvec.shape[1]
+    elif dvec.ndim == 1:
+        dlen = dvec.shape[0]
+    else:
+        raise RuntimeError("Cannot process " + str(dvec.shape))
     # note for even number of samples, the last element
     # is purely real, and twice the magnitude
-    if not len(dvec) // 2:
+    if not dlen // 2:
         raise RuntimeError("must be careful with high frequency component")
     cdata = scipy.fft.rfft(dvec, norm='forward')
     return cdata
@@ -146,9 +158,7 @@ class hbconfig:
         
 
     def get_hb_solution_time_domain(self):
-        hbtd = np.zeros(shape=(self._number_rows, self._time_vec_len))
-        for i in range(self._number_rows):
-            hbtd[i,:] = real_ifft(self._hb_solution[i,:])
+        hbtd = real_ifft(self._hb_solution)
         return hbtd
 
     def get_time_bias_vector(self):
@@ -202,9 +212,7 @@ class hbconfig:
 
     def get_fft_of_td(self, td):
         # assume dimensions are _number_rows, _time_vec_len
-        fd = np.zeros((self._number_rows, self._real_frequency_vec_len), dtype=np.cdouble)
-        for i, v in enumerate(td):
-            fd[i] = real_to_complex_fft(v)
+        fd = real_to_complex_fft(td)
         return fd
 
 
@@ -249,9 +257,9 @@ class hbconfig:
         fdcopy = fdvec.reshape(self._number_rows, self._real_frequency_vec_len)
 
         # each column goes to a different jacobian
-        td_deltax = np.zeros((self._number_rows, self._time_vec_len), dtype=np.double)
-        for i,v in enumerate(fdcopy):
-            td_deltax[i] = real_ifft(v)
+        #td_deltax = np.zeros((self._number_rows, self._time_vec_len), dtype=np.double)
+        #for i,v in enumerate(fdcopy):
+        td_deltax = real_ifft(fdcopy)
         return td_deltax
 
     def apply_jacobian(self, fdvec):
