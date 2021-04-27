@@ -217,12 +217,12 @@ class hbconfig:
 
 
     def apply_omega_scales(self, fd):
+        '''
+        overwrites copy
+        '''
         wscales = self.get_omega_scales()
         for i, v in enumerate(wscales):
             fd[:,i] *= v
-        #print(fd.shape)
-        #print(fd)
-        #raise RuntimeError("STOP")
         return fd
 
     # frequency domain RHS
@@ -238,14 +238,12 @@ class hbconfig:
 
         fd_i = self.get_fft_of_td(td_i)
         fd_q = self.get_fft_of_td(td_q)
-        fd_q = self.apply_omega_scales(fd_q)
+        self.apply_omega_scales(fd_q)
 
-        rhs = fd_i + fd_q
+        rhs = fd_i
+        rhs += fd_q
         rhs = np.reshape(rhs,(self._number_rows*self._real_frequency_vec_len,))
         return rhs
-        # TODO: do not transpose or reshape into a vector yet
-        #rhs = np.transpose(rhs)
-        #rhs = np.reshape(rhs,(self._number_rows*self._real_frequency_vec_len,))
 
     # assume the solution vector is per frequency per node
     # needs to be converted so that each time-sample jacobian can be readily multiplied by a vector
@@ -277,9 +275,10 @@ class hbconfig:
 
         dg_fd = self.get_fft_of_td(dg_td)
         dc_fd = self.get_fft_of_td(dc_td)
-        dc_fd = self.apply_omega_scales(dc_fd)
+        self.apply_omega_scales(dc_fd)
 
-        japplied = dg_fd + dc_fd
+        japplied = dg_fd
+        japplied += dc_fd
         #TODO: is this one necessary?
         japplied[:,0] = np.real(japplied[:,0])
         japplied = np.reshape(japplied,(self._number_rows*self._real_frequency_vec_len,))
