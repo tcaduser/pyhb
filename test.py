@@ -20,7 +20,7 @@ print(sol[0])
 
 # start with hb config
 hb = hbconfig.hbconfig()
-nharm = 20
+nharm = 50
 hb.set_harmonics(nharm)
 hb.set_bias_callback(lambda x : circuit.set_bias(x))
 hb.set_matrix_rhs_callback(lambda : circuit.load_circuit())
@@ -33,7 +33,7 @@ hb.create_hb_solution()
 
 avec = np.zeros((nharm+1,), dtype=np.cdouble)
 avec[0] = 0.7
-avec[1] = 0.3
+avec[1] = 0.7
 hb.set_bias_vector(avec)
 
 # this is at the beginning of each step
@@ -47,7 +47,7 @@ if False:
     hb.apply_jacobian(vec)
     hb.apply_preconditioner()
 
-for i in range(100):
+for i in range(30):
     x, exitCode = hb.linear_solve()
     hb.set_hb_solution_update(x)
 
@@ -60,26 +60,12 @@ for i in range(100):
 X = hb.get_hb_solution()
 print(X)
 Y = X[2,:]
-Y = np.concatenate((Y,np.zeros(10)))
+#Y = np.concatenate((Y,np.zeros(10)))
 x = hbconfig.real_ifft(Y)
-import matplotlib.pyplot as plt
-plt.plot(x)
-#plt.plot(np.flip(x))
-plt.show()
+if True:
+    import matplotlib.pyplot as plt
+    #plt.plot(x)
+    plt.stem(np.real(Y))
+    #plt.stem(np.imag(Y))
+    plt.show()
 
-#x, exitCode = hb.linear_solve()
-#hb.set_hb_solution_update(x)
-#x, exitCode = hb.linear_solve()
-#hb.set_hb_solution_update(x)
-#x, exitCode = hb.linear_solve()
-#hb.set_hb_solution_update(x)
-#x, exitCode = hb.linear_solve()
-#hb.set_hb_solution_update(x)
-#x, exitCode = hb.linear_solve()
-#hb.set_hb_solution_update(x)
-#x, exitCode = hb.linear_solve()
-#hb.set_hb_solution_update(x)
-#x, exitCode = hb.linear_solve()
-#hb.set_hb_solution_update(x)
-#x, exitCode = hb.linear_solve()
-#hb.set_hb_solution_update(x)

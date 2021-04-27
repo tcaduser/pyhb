@@ -324,7 +324,8 @@ class hbconfig:
         J = sparse.linalg.LinearOperator(fdshape, J_x)
 
         #x, exitCode = sparse.linalg.gmres(A=J, b=F, callback_type='pr_norm', callback=lambda x : print(x), tol=1e-20)
-        x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, tol=1e-6)
+        #x, exitCode = sparse.linalg.lgmres(A=J, b=F, M=M, tol=1e-6, maxiter=10)
+        x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, tol=1e-6, restart=10, maxiter=10)
         #x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, callback_type='pr_norm', callback=lambda x : print(x), tol=1e-20)
         print(x,exitCode)
         print(F)
