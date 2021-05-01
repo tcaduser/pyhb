@@ -155,6 +155,7 @@ class hbconfig:
         rerr = linalg.norm(nupd)/linalg.norm(self._hb_solution)
         print("RELATIVE ERROR %g" % rerr)
         self._hb_solution += nupd
+        return rerr
         
 
     def get_hb_solution_time_domain(self):
@@ -328,8 +329,8 @@ class hbconfig:
         #x, exitCode = sparse.linalg.lgmres(A=J, b=F, M=M, tol=1e-6, maxiter=10)
         x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, tol=1e-6, restart=10, maxiter=10)
         #x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, callback_type='pr_norm', callback=lambda x : print(x), tol=1e-20)
-        print(x,exitCode)
-        print(F)
+        #print(x,exitCode)
+        #print(F)
         #x, exitCode = sparse.linalg.gmres(A=J, b=F, M=M, x0=x, callback_type='pr_norm', callback=lambda x : print(x))
         #print(x,exitCode)
         return x, exitCode

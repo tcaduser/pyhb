@@ -33,7 +33,7 @@ hb.create_hb_solution()
 
 avec = np.zeros((nharm+1,), dtype=np.cdouble)
 avec[0] = 0.7
-avec[1] = 0.7
+avec[1] = 0.5j
 hb.set_bias_vector(avec)
 
 # this is at the beginning of each step
@@ -47,9 +47,11 @@ if False:
     hb.apply_jacobian(vec)
     hb.apply_preconditioner()
 
-for i in range(30):
+for i in range(100):
     x, exitCode = hb.linear_solve()
-    hb.set_hb_solution_update(x)
+    r = hb.set_hb_solution_update(x)
+    if r < 1e-10:
+        break
 
 #avec[1] = 0.025
 #hb.set_bias_vector(avec)
@@ -58,14 +60,14 @@ for i in range(30):
 #    hb.set_hb_solution_update(x)
 
 X = hb.get_hb_solution()
-print(X)
+#print(X)
 Y = X[2,:]
 #Y = np.concatenate((Y,np.zeros(10)))
 x = hbconfig.real_ifft(Y)
 if True:
     import matplotlib.pyplot as plt
-    #plt.plot(x)
-    plt.stem(np.real(Y))
+    plt.plot(x)
+    #plt.stem(np.real(Y))
     #plt.stem(np.imag(Y))
     plt.show()
 
