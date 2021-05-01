@@ -50,6 +50,7 @@ if False:
 for i in range(100):
     x, exitCode = hb.linear_solve()
     r = hb.set_hb_solution_update(x)
+    print ("%d %1.15e" % (i, r))
     if r < 1e-10:
         break
 

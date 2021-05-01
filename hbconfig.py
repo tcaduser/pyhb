@@ -153,7 +153,7 @@ class hbconfig:
         nupd = upd.reshape((self._number_rows, self._real_frequency_vec_len))
         nupd[:,0] = np.real(nupd[:,0])
         rerr = linalg.norm(nupd)/linalg.norm(self._hb_solution)
-        print("RELATIVE ERROR %g" % rerr)
+        #print("RELATIVE ERROR %g" % rerr)
         self._hb_solution += nupd
         return rerr
         
