@@ -7,7 +7,7 @@ import scipy.fft
 # To ensure understanding about what the transpose of the fft operator means
 
 
-eye = np.eye(3)
+eye = np.eye(5)
 print(eye)
 f1 = scipy.fft.fft(eye, axis=0, norm='forward')
 print(f1)

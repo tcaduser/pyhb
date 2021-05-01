@@ -289,7 +289,8 @@ class hbconfig:
         wscales = self.get_omega_scales()
         Minvs = [None]*len(wscales)
         for i, w in enumerate(wscales):
-            Minvs[i] = sparse.linalg.factorized(cb(w))
+            Minvs[i] = sparse.linalg.splu(A=cb(w), permc_spec='COLAMD')
+            #Minvs[i] = sparse.linalg.factorized(cb(w))
         self._preconditioner = Minvs
 
 
@@ -300,7 +301,7 @@ class hbconfig:
         papplied = np.zeros((self._number_rows, self._real_frequency_vec_len), dtype=np.cdouble)
         fdcopy = fdvec.reshape(self._number_rows, self._real_frequency_vec_len)
         for i, p in enumerate(self._preconditioner):
-            papplied[:,i] = p(fdcopy[:,i])
+            papplied[:,i] = p.solve(fdcopy[:,i])
         papplied[:,0] = np.real(papplied[:,0])
         papplied = np.reshape(papplied,(self._number_rows*self._real_frequency_vec_len,))
         return papplied
